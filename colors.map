@@ -1,0 +1,18 @@
+// Every line that starts with a double-slash (//) is a comment and will be ignored
+// Empty lines will be ignored, too
+// Each color definition contains the color name, a = character and the RGB value
+// The RGB value can be
+// - hexadecimal starting with "#"												e.g. #FF00FF / #F0F
+// - decimal without prefix														e.g. 0
+// - decimal as separate RGB values starting with "rgb(" and ending with ")"	e.g. rbg(128,0,255)
+
+black=0
+lightgray=rgb(211,211,211)
+orange=rgb(255,165,0)
+green=#008000
+red=#F00
+blue=#00F
+yellow=#FF0
+gray=#808080
+white=#FFF
+magenta=#F0F

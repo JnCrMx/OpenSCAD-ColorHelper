@@ -16,19 +16,6 @@ import de.jcm.math.geo.Triangle;
 public class ColorHelper
 {
 	private static HashMap<String, Color> colorMap = new HashMap<>();
-	static
-	{
-		colorMap.put("black", new Color(0, 0, 0));
-		colorMap.put("lightgray", new Color(211, 211, 211));
-		colorMap.put("orange", new Color(255, 165, 0));
-		colorMap.put("green", new Color(0, 128, 0));
-		colorMap.put("red", new Color(255, 0, 0));
-		colorMap.put("blue", new Color(0, 0, 255));
-		colorMap.put("yellow", new Color(255, 255, 0));
-		colorMap.put("gray", new Color(128, 128, 128));
-		colorMap.put("white", new Color(255, 255, 255));
-		colorMap.put("magenta", new Color(255, 0, 255));
-	}
 	
 	private static int maxColor = 0;
 	public static String color(String color)
@@ -52,6 +39,8 @@ public class ColorHelper
 		System.out.println("--stl-pattern [pattern]\t\t\t\t\tPattern for STL output files.\t\t\t\t{number}_{input}_{color}.stl");
 		System.out.println("--obj-pattern [pattern]\t\t\t\t\tPattern for OBJ output files.\t\t\t\t{number}_{input}_{color}.obj");
 		System.out.println("--material-pattern [pattern]\t\t\t\tPattern for material names.\t\t\t\t{color}");
+		System.out.println("--exe [file]\t\t\t\t\t\tOpenSCAD executable.\t\t\t\t\tC:\\Program Files\\OpenSCAD\\openscad.exe OR C:\\Program Files (x86)\\OpenSCAD\\openscad.exe");
+		System.out.println("--color-map [file]\t\t--colors\t\tFile containing color definitions.\t\t\tcolors.map");
 		System.out.println("--help\t\t\t\t-h\t\t\tPrint this help message and exit.");
 		System.out.println("--version\t\t\t-v\t\t\tPrint version and exit.");
 		
@@ -73,6 +62,7 @@ public class ColorHelper
 		File output = null;
 		File mtlOutput = null;
 		File mergeOBJ = null;
+		File colorMapFile = new File("colors.map");
 		
 		String outputPatternSCAD 	= "{number}_{input}_{color}.scad";
 		String outputPatternSTL 	= "{number}_{input}_{color}.stl";
@@ -119,6 +109,10 @@ public class ColorHelper
 			{
 				openSCAD = new File(iterator.next());
 			}
+			else if(arg.equals("--color-map") || arg.equals("--colors"))
+			{			
+				colorMapFile = new File(iterator.next());
+			}
 			else if(arg.equals("--help") || arg.equals("-h"))
 			{
 				printHelp();
@@ -163,11 +157,86 @@ public class ColorHelper
 		outputPatternSTL = outputPatternSTL.replace("{input}", inputName);
 		outputPatternOBJ = outputPatternOBJ.replace("{input}", inputName);
 		
+		Scanner scanner = new Scanner(colorMapFile);
+		
+		while(scanner.hasNextLine())
+		{
+			String line = scanner.nextLine();
+			if(!line.isEmpty() && !line.startsWith("//"))
+			{
+				String[] parts = line.split("=");
+				String name = parts[0].trim();
+				String definition = parts[1].trim();
+				
+				if(definition.startsWith("#"))
+				{
+					String hex = definition.substring(1);
+					if(hex.length()==3)
+					{
+						String part1 = hex.substring(0,1);
+						part1+=part1;
+						String part2 = hex.substring(1,2);
+						part2+=part2;
+						String part3 = hex.substring(2,3);
+						part3+=part3;
+
+						int r = Integer.parseInt(part1, 16);
+						int g = Integer.parseInt(part2, 16);
+						int b = Integer.parseInt(part3, 16);
+						
+						Color color = new Color(r, g, b);
+						colorMap.putIfAbsent(name, color);
+
+						System.out.println("Defined color: ["+name+"] = "+color.toString());
+					}
+					if(hex.length()==6)
+					{
+						String part1 = hex.substring(0,2);
+						String part2 = hex.substring(2,4);
+						String part3 = hex.substring(4,6);
+
+						int r = Integer.parseInt(part1, 16);
+						int g = Integer.parseInt(part2, 16);
+						int b = Integer.parseInt(part3, 16);
+						
+						Color color = new Color(r, g, b);
+						colorMap.putIfAbsent(name, color);
+
+						System.out.println("Defined color: ["+name+"] = "+color.toString());
+					}
+				}
+				else if(definition.startsWith("rgb("))
+				{
+					String sub = definition.substring(4,definition.lastIndexOf(')'));
+					String[] partss = sub.split(",");
+					
+					int r = Integer.parseInt(partss[0].trim());
+					int g = Integer.parseInt(partss[1].trim());
+					int b = Integer.parseInt(partss[2].trim());
+					
+					Color color = new Color(r, g, b);
+					colorMap.putIfAbsent(name, color);
+					
+					System.out.println("Defined color: ["+name+"] = "+color.toString());
+				}
+				else
+				{
+					int rgb = Integer.parseInt(definition);
+					Color color = new Color(rgb);
+					colorMap.putIfAbsent(name, color);
+
+					System.out.println("Defined color: ["+name+"] = "+color.toString());
+				}
+			}
+		}
+		
+		scanner.close();
+		
 		LinkedList<String> colors = new LinkedList<>();
 		LinkedList<String> lines = new LinkedList<>();
 		HashMap<String, LinkedList<Triangle>> allTriangles = new HashMap<>();
 		
-		Scanner scanner = new Scanner(input);
+		scanner = new Scanner(input);
 		while(scanner.hasNextLine())
 		{
 			String line=scanner.nextLine();
