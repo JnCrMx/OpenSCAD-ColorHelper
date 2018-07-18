@@ -6,6 +6,9 @@
 // - decimal without prefix														e.g. 0
 // - decimal as separate RGB values starting with "rgb(" and ending with ")"	e.g. rbg(128,0,255)
 
+// Sources:
+// - https://en.wikipedia.org/wiki/Web_colors#X11_color_names
+
 black=0
 lightgray=rgb(211,211,211)
 orange=rgb(255,165,0)
@@ -16,3 +19,5 @@ yellow=#FF0
 gray=#808080
 white=#FFF
 magenta=#F0F
+MidnightBlue=rgb(25,25,112)
+DarkMagenta=#8B008B
