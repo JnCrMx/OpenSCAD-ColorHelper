@@ -41,6 +41,7 @@ public class ColorHelper
 		System.out.println("--material-pattern [pattern]\t\t\t\tPattern for material names.\t\t\t\t{color}");
 		System.out.println("--exe [file]\t\t\t\t\t\tOpenSCAD executable.\t\t\t\t\tC:\\Program Files\\OpenSCAD\\openscad.exe OR C:\\Program Files (x86)\\OpenSCAD\\openscad.exe");
 		System.out.println("--color-map [file]\t\t--colors\t\tFile containing color definitions.\t\t\tcolors.map");
+		System.out.println("--set [key]=[value]\t\t-s\t\t\tSet a property (multiple allowed).");
 		System.out.println("--help\t\t\t\t-h\t\t\tPrint this help message and exit.");
 		System.out.println("--version\t\t\t-v\t\t\tPrint version and exit.");
 		
@@ -68,6 +69,8 @@ public class ColorHelper
 		String outputPatternSTL 	= "{number}_{input}_{color}.stl";
 		String outputPatternOBJ 	= "{number}_{input}_{color}.obj";
 		String materialPattern 		= "{color}";
+		
+		HashMap<String, String> properties = new HashMap<>();
 		
 		File openSCAD = new File("C:\\Program Files\\OpenSCAD\\openscad.exe");
 		if(!openSCAD.exists())
@@ -112,6 +115,16 @@ public class ColorHelper
 			else if(arg.equals("--color-map") || arg.equals("--colors"))
 			{			
 				colorMapFile = new File(iterator.next());
+			}
+			else if(arg.equals("--set") || arg.equals("-s"))
+			{
+				String prop = iterator.next();
+				String[] o = prop.split("=");
+
+				String key = o[0];
+				String value = o[1];
+				
+				properties.putIfAbsent(key, value);
 			}
 			else if(arg.equals("--help") || arg.equals("-h"))
 			{
@@ -165,7 +178,7 @@ public class ColorHelper
 			if(!line.isEmpty() && !line.startsWith("//"))
 			{
 				String[] parts = line.split("=");
-				String name = parts[0].trim();
+				String name = parts[0].trim().toLowerCase();
 				String definition = parts[1].trim();
 				
 				if(definition.startsWith("#"))
@@ -240,39 +253,62 @@ public class ColorHelper
 		while(scanner.hasNextLine())
 		{
 			String line=scanner.nextLine();
-			lines.add(line);
-			if(line.trim().startsWith("color(\""))
+			if(line.toLowerCase().startsWith("/*extern*/"))
 			{
-				int start=line.indexOf('"')+1;
-				int end=line.indexOf('"', start);
-				String color = line.substring(start, end);
-				if(!colors.contains(color))
+				String def = line.substring(10);
+				String[] parts = def.split("=");
+
+				String key = parts[0].trim();
+				
+				if(properties.containsKey(key))
 				{
-					colors.add(color);
-					System.out.println("Found new color: ["+color+"]");
-					if(color.length()>maxColor)
-						maxColor=color.length();
+					String value = properties.get(key);
+					
+					lines.add("/* prop */"+key+" = \""+value+"\";");
+					System.out.println("Set value for property "+key+" to "+value);
+				}
+				else
+				{
+					lines.add(line);
+					System.out.println("Ignored property "+key);
 				}
 			}
-			else if(line.trim().startsWith("color([") || line.trim().startsWith("color( ["))
+			else
 			{
-				int start=line.indexOf('[')+1;
-				int end=line.indexOf(']', start);
-				String c = line.substring(start, end);
-				
-				String[] parts = c.split(",");
-
-				double r = Double.parseDouble(parts[0].trim());
-				double g = Double.parseDouble(parts[1].trim());
-				double b = Double.parseDouble(parts[2].trim());
-				
-				String color = "rgb("+r+","+g+","+b+")";
-				if(!colors.contains(color))
+				lines.add(line);
+				if(line.trim().startsWith("color(\""))
 				{
-					colors.add(color);
-					System.out.println("Found new color: ["+color+"]");
-					if(color.length()>maxColor)
-						maxColor=color.length();
+					int start=line.indexOf('"')+1;
+					int end=line.indexOf('"', start);
+					String color = line.substring(start, end).toLowerCase();
+					if(!colors.contains(color))
+					{
+						colors.add(color);
+						System.out.println("Found new color: ["+color+"]");
+						if(color.length()>maxColor)
+							maxColor=color.length();
+					}
+				}
+				else if(line.trim().startsWith("color([") || line.trim().startsWith("color( ["))
+				{
+					int start=line.indexOf('[')+1;
+					int end=line.indexOf(']', start);
+					String c = line.substring(start, end);
+					
+					String[] parts = c.split(",");
+	
+					double r = Double.parseDouble(parts[0].trim());
+					double g = Double.parseDouble(parts[1].trim());
+					double b = Double.parseDouble(parts[2].trim());
+					
+					String color = "rgb("+r+","+g+","+b+")";
+					if(!colors.contains(color))
+					{
+						colors.add(color);
+						System.out.println("Found new color: ["+color+"]");
+						if(color.length()>maxColor)
+							maxColor=color.length();
+					}
 				}
 			}
 		}
@@ -297,7 +333,7 @@ public class ColorHelper
 				{
 					int start=line.indexOf('"')+1;
 					int end=line.indexOf('"', start);
-					String color = line.substring(start, end);
+					String color = line.substring(start, end).toLowerCase();
 					if(color.equals(activeColor))
 						writer.write(line+"\n");
 					else
@@ -477,6 +513,7 @@ public class ColorHelper
 			else
 			{
 				System.err.println("["+activeColor+"] OpenSCAD returned exit code "+exit);
+				allTriangles.put(activeColor, new LinkedList<>());
 			}
 		}
 		mtl.close();
