@@ -4,10 +4,13 @@ import java.awt.Color;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintStream;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Scanner;
 
 import de.jcm.math.geo.Point3D;
@@ -169,6 +172,9 @@ public class ColorHelper
 		outputPatternSCAD = outputPatternSCAD.replace("{input}", inputName);
 		outputPatternSTL = outputPatternSTL.replace("{input}", inputName);
 		outputPatternOBJ = outputPatternOBJ.replace("{input}", inputName);
+		
+		DecimalFormat df = new DecimalFormat("0", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+		df.setMaximumFractionDigits(340); // 340 = DecimalFormat.DOUBLE_FRACTION_DIGITS
 		
 		Scanner scanner = new Scanner(colorMapFile);
 		
@@ -463,13 +469,22 @@ public class ColorHelper
 				
 				for(Triangle triangle : triangles)
 				{
-					print.println("v "+triangle.getVertex(0).getX()+" "+triangle.getVertex(0).getY()+" "+triangle.getVertex(0).getZ());
-					print.println("v "+triangle.getVertex(1).getX()+" "+triangle.getVertex(1).getY()+" "+triangle.getVertex(1).getZ());
-					print.println("v "+triangle.getVertex(2).getX()+" "+triangle.getVertex(2).getY()+" "+triangle.getVertex(2).getZ());
+					for(int j=0;j<3;j++)
+					{
+						double x=triangle.getVertex(j).getX();
+						double y=triangle.getVertex(j).getY();
+						double z=triangle.getVertex(j).getZ();
+					
+						print.println("v "+df.format(x)+" "+df.format(y)+" "+df.format(z));
+					}
 				}
 				for(Triangle triangle : triangles)
 				{
-					print.println("vn "+triangle.getNormal().getX()+" "+triangle.getNormal().getY()+" "+triangle.getNormal().getZ());
+					double x=triangle.getNormal().getX();
+					double y=triangle.getNormal().getY();
+					double z=triangle.getNormal().getZ();
+				
+					print.println("vn "+df.format(x)+" "+df.format(y)+" "+df.format(z));
 				}
 				for(int j=0;j<triangles.size();j++)
 				{
@@ -507,7 +522,7 @@ public class ColorHelper
 					b/=255;
 					
 					mtl.println("newmtl "+materialPattern.replace("{number}", Integer.toString(i)).replace("{color}", activeColor));
-					mtl.println("Kd "+r+" "+g+" "+b);
+					mtl.println("Kd "+df.format(r)+" "+df.format(g)+" "+df.format(b));
 				}
 			}
 			else
@@ -531,13 +546,22 @@ public class ColorHelper
 			LinkedList<Triangle> triangles = allTriangles.get(activeColor);
 			for(Triangle triangle : triangles)
 			{
-				print.println("v "+triangle.getVertex(0).getX()+" "+triangle.getVertex(0).getY()+" "+triangle.getVertex(0).getZ());
-				print.println("v "+triangle.getVertex(1).getX()+" "+triangle.getVertex(1).getY()+" "+triangle.getVertex(1).getZ());
-				print.println("v "+triangle.getVertex(2).getX()+" "+triangle.getVertex(2).getY()+" "+triangle.getVertex(2).getZ());
+				for(int j=0;j<3;j++)
+				{
+					double x=triangle.getVertex(j).getX();
+					double y=triangle.getVertex(j).getY();
+					double z=triangle.getVertex(j).getZ();
+				
+					print.println("v "+df.format(x)+" "+df.format(y)+" "+df.format(z));
+				}
 			}
 			for(Triangle triangle : triangles)
 			{
-				print.println("vn "+triangle.getNormal().getX()+" "+triangle.getNormal().getY()+" "+triangle.getNormal().getZ());
+				double x=triangle.getNormal().getX();
+				double y=triangle.getNormal().getY();
+				double z=triangle.getNormal().getZ();
+			
+				print.println("vn "+df.format(x)+" "+df.format(y)+" "+df.format(z));
 			}
 		}
 		
