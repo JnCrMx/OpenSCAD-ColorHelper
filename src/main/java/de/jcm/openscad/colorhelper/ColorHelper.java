@@ -24,10 +24,10 @@ public class ColorHelper
 	
 	public static String color(String color)
 	{
-		String c = "[" + color + "]";
+		StringBuilder c = new StringBuilder("[" + color + "]");
 		while(c.length() - 2 < maxColor)
-			c = c + " ";
-		return c;
+			c.append(" ");
+		return c.toString();
 	}
 	
 	public static void printHelp()
@@ -367,19 +367,18 @@ public class ColorHelper
 		}
 		
 		PrintStream mtl = new PrintStream(mtlOutput);
-		
-		for(int gid = 0; gid < groups.size(); gid++)
-		{	
-			Group activeGroup = groups.get(gid);
+
+		for(Group activeGroup : groups)
+		{
 			LinkedList<String> lines = new LinkedList<>();
-			
-			for(int i=0;i<allLines.size();i++)
+
+			for(int i = 0; i < allLines.size(); i++)
 			{
 				String line = allLines.get(i);
 				if(line.trim().startsWith("color(\""))
 				{
 					Group group = groups.get(groupMap[i]);
-					if(group==activeGroup)
+					if(group == activeGroup)
 						lines.add(allLines.get(i));
 					else
 					{
@@ -393,7 +392,7 @@ public class ColorHelper
 								open--;
 							if(line.contains(";") && open <= 0)
 								break;
-							
+
 							i++;
 							line = allLines.get(i);
 						}
@@ -405,20 +404,24 @@ public class ColorHelper
 				}
 			}
 			HashMap<String, LinkedList<Triangle3D>> allTriangles = new HashMap<>();
-			
+
 			for(int i = 0; i < colors.size(); i++)
 			{
 				String activeColor = colors.get(i);
 				File scad = new File(output,
-						outputPatternSCAD.replace("{number}", Integer.toString(i)).replace("{color}", activeColor).replace("{group}", activeGroup.getName()));
+				                     outputPatternSCAD.replace("{number}", Integer.toString(i))
+						                     .replace("{color}", activeColor)
+						                     .replace("{group}", activeGroup.getName()));
 				File stl = new File(output,
-						outputPatternSTL.replace("{number}", Integer.toString(i)).replace("{color}", activeColor).replace("{group}", activeGroup.getName()));
+				                    outputPatternSTL.replace("{number}", Integer.toString(i))
+						                    .replace("{color}", activeColor).replace("{group}", activeGroup.getName()));
 				File obj = new File(output,
-						outputPatternOBJ.replace("{number}", Integer.toString(i)).replace("{color}", activeColor).replace("{group}", activeGroup.getName()));
-				
+				                    outputPatternOBJ.replace("{number}", Integer.toString(i))
+						                    .replace("{color}", activeColor).replace("{group}", activeGroup.getName()));
+
 				System.out.println(color(activeGroup.getName()) + " " + color(activeColor)
-						+ " Generating SCAD file... => " + scad.getAbsolutePath());
-				
+						                   + " Generating SCAD file... => " + scad.getAbsolutePath());
+
 				FileWriter writer = new FileWriter(scad);
 				for(int j = 0; j < lines.size(); j++)
 				{
@@ -442,7 +445,7 @@ public class ColorHelper
 									open--;
 								if(line.contains(";") && open <= 0)
 									break;
-								
+
 								j++;
 								line = lines.get(j);
 							}
@@ -453,51 +456,53 @@ public class ColorHelper
 						int start = line.indexOf('[') + 1;
 						int end = line.indexOf(']', start);
 						String c = line.substring(start, end);
-						
+
 						String[] parts = c.split(",");
-						
+
 						double r = Double.parseDouble(parts[0].trim());
 						double g = Double.parseDouble(parts[1].trim());
 						double b = Double.parseDouble(parts[2].trim());
-						
+
 						String color = "rgb(" + r + "," + g + "," + b + ")";
 						if(color.equals(activeColor))
 							writer.write(line + "\n");
 						else
 						{
 							int open = 0;
-							while(true)
+							do
 							{
 								writer.write("//" + line + "\n");
 								j++;
 								line = lines.get(j);
-								
+
 								if(line.contains("{"))
 									open++;
 								if(line.contains("}"))
 									open--;
-								if(line.contains(";") && open == 0)
-									break;
 							}
+							while(!line.contains(";") || open != 0);
 						}
 					}
 					else
 						writer.write(line + "\n");
 				}
 				writer.close();
-				
+
 				System.out.println(color(activeGroup.getName()) + " " + color(activeColor)
-						+ " Generating STL  file... => " + stl.getAbsolutePath());
+						                   + " Generating STL  file... => " + stl.getAbsolutePath());
 				Process proc = Runtime.getRuntime().exec("\"" + openSCAD.getAbsolutePath() + "\" -o\""
-						+ stl.getAbsolutePath() + "\" \"" + scad.getAbsolutePath() + "\"");
+						                                         + stl.getAbsolutePath() + "\" \"" + scad
+						.getAbsolutePath() + "\"");
 				int exit = proc.waitFor();
+				String material = materialPattern.replace("{number}", Integer.toString(i))
+						.replace("{color}", activeColor);
 				if(exit == 0)
 				{
 					System.out.println(color(activeGroup.getName()) + " " + color(activeColor)
-							+ " Generating OBJ  file... => " + obj.getAbsolutePath());
-					
+							                   + " Generating OBJ  file... => " + obj.getAbsolutePath());
+
 					Scanner scan = new Scanner(stl);
-					
+
 					LinkedList<Triangle3D> triangles = new LinkedList<>();
 					String solidName = "";
 					while(scan.hasNextLine())
@@ -511,13 +516,13 @@ public class ColorHelper
 						{
 							String n = line.substring(15);
 							String[] coords = n.split(" ");
-							
+
 							double x = Double.parseDouble(coords[0]);
 							double y = Double.parseDouble(coords[1]);
 							double z = Double.parseDouble(coords[2]);
 
 							Vector3D normal = new Vector3D(x, y, z);
-							
+
 							line = scan.nextLine();
 							if(line.equals("    outer loop"))
 							{
@@ -527,7 +532,7 @@ public class ColorHelper
 								vertices[2] = scan.nextLine();
 
 								Vector3D[] points = new Vector3D[3];
-								
+
 								for(int j = 0; j < 3; j++)
 								{
 									String string = vertices[j];
@@ -535,11 +540,11 @@ public class ColorHelper
 									{
 										String v = string.substring(13);
 										coords = v.split(" ");
-										
+
 										x = Double.parseDouble(coords[0]);
 										y = Double.parseDouble(coords[1]);
 										z = Double.parseDouble(coords[2]);
-										
+
 										points[j] = new Vector3D(x, y, z);
 									}
 								}
@@ -548,17 +553,17 @@ public class ColorHelper
 						}
 					}
 					scan.close();
-					
+
 					allTriangles.put(activeColor, triangles);
-					
+
 					PrintStream print = new PrintStream(obj);
-					
+
 					print.println("mtllib " + mtlOutput.getAbsolutePath());
 					print.println("usemtl "
-							+ materialPattern.replace("{number}", Integer.toString(i)).replace("{color}", activeColor).replace("{group}", activeGroup.getName()));
-					
+							              + material.replace("{group}", activeGroup.getName()));
+
 					print.println("o " + solidName);
-					
+
 					for(Triangle3D triangle : triangles)
 					{
 						for(int j = 0; j < 3; j++)
@@ -566,7 +571,7 @@ public class ColorHelper
 							double x = triangle.getVertex(j).getX();
 							double y = triangle.getVertex(j).getY();
 							double z = triangle.getVertex(j).getZ();
-							
+
 							print.println("v " + df.format(x) + " " + df.format(y) + " " + df.format(z));
 						}
 					}
@@ -575,91 +580,89 @@ public class ColorHelper
 						double x = triangle.getNormal().getX();
 						double y = triangle.getNormal().getY();
 						double z = triangle.getNormal().getZ();
-						
+
 						print.println("vn " + df.format(x) + " " + df.format(y) + " " + df.format(z));
 					}
 					for(int j = 0; j < triangles.size(); j++)
 					{
 						int base = (j * 3) + 1;
-						
+
 						print.println("f " + base + "//" + (j + 1) + " " + (base + 1) + "//" + (j + 1) + " "
-								+ (base + 2) + "//" + (j + 1));
+								              + (base + 2) + "//" + (j + 1));
 					}
-					
+
 					print.close();
-					
+
 					System.out.println(color(activeGroup.getName()) + " " + color(activeColor)
-							+ " Generating MTL entry... => " + mtlOutput.getAbsolutePath());
-					
+							                   + " Generating MTL entry... => " + mtlOutput.getAbsolutePath());
+
 					if(activeColor.startsWith("rgb("))
 					{
 						String sub = activeColor.substring(4, activeColor.lastIndexOf(')'));
 						String[] parts = sub.split(",");
-						
+
 						double r = Double.parseDouble(parts[0]);
 						double g = Double.parseDouble(parts[1]);
 						double b = Double.parseDouble(parts[2]);
-						
-						mtl.println("newmtl " + materialPattern.replace("{number}", Integer.toString(i))
-								.replace("{color}", activeColor));
+
+						mtl.println("newmtl " + material);
 						mtl.println("Kd " + r + " " + g + " " + b);
 					}
 					else
 					{
 						Color color = colorMap.get(activeColor);
-						
+
 						double r = color.getRed();
 						double g = color.getGreen();
 						double b = color.getBlue();
-						
+
 						r /= 255;
 						g /= 255;
 						b /= 255;
-						
-						mtl.println("newmtl " + materialPattern.replace("{number}", Integer.toString(i))
-								.replace("{color}", activeColor));
+
+						mtl.println("newmtl " + material);
 						mtl.println("Kd " + df.format(r) + " " + df.format(g) + " " + df.format(b));
 					}
 				}
 				else
 				{
 					System.out.println(color(activeGroup.getName()) + " " + color(activeColor)
-							+ " OpenSCAD returned exit code " + exit);
-					
+							                   + " OpenSCAD returned exit code " + exit);
+
 					System.out.println(color(activeGroup.getName()) + " " + color(activeColor)
-							+ " Creating   STL  file... => " + stl.getAbsolutePath());
+							                   + " Creating   STL  file... => " + stl.getAbsolutePath());
 					PrintStream print = new PrintStream(stl);
-					
+
 					print.println("solid " + "empty");
 					print.println("endsolid " + "empty");
-					
+
 					print.close();
-					
+
 					System.out.println(color(activeGroup.getName()) + " " + color(activeColor)
-							+ " Creating   OBJ  file... => " + obj.getAbsolutePath());
+							                   + " Creating   OBJ  file... => " + obj.getAbsolutePath());
 					print = new PrintStream(obj);
 					print.println("mtllib " + mtlOutput.getAbsolutePath());
 					print.println("usemtl "
-							+ materialPattern.replace("{number}", Integer.toString(i)).replace("{color}", activeColor).replace("{group}", activeGroup.getName()));
-					
+							              + material.replace("{group}", activeGroup.getName()));
+
 					print.println("o " + "empty");
 					print.close();
-					
+
 					allTriangles.put(activeColor, new LinkedList<>());
 				}
 			}
-			
+
 			File mergeOBJ = new File(output,
-					outputPatternMerge.replace("{group}", activeGroup.getName()));
-			System.out.println(color(activeGroup.getName())+" "+color("FINAL")+" Merging OBJ models... => " + mergeOBJ.getAbsolutePath());
+			                         outputPatternMerge.replace("{group}", activeGroup.getName()));
+			System.out.println(color(activeGroup
+					                         .getName()) + " " + color("FINAL") + " Merging OBJ models... => " + mergeOBJ
+					.getAbsolutePath());
 			PrintStream print = new PrintStream(mergeOBJ);
-			
+
 			print.println("mtllib " + mtlOutput.getAbsolutePath());
-			
-			for(int i = 0; i < colors.size(); i++)
+
+			for(String activeColor : colors)
 			{
-				String activeColor = colors.get(i);
-				
 				LinkedList<Triangle3D> triangles = allTriangles.get(activeColor);
 				for(Triangle3D triangle : triangles)
 				{
@@ -668,7 +671,7 @@ public class ColorHelper
 						double x = triangle.getVertex(j).getX();
 						double y = triangle.getVertex(j).getY();
 						double z = triangle.getVertex(j).getZ();
-						
+
 						print.println("v " + df.format(x) + " " + df.format(y) + " " + df.format(z));
 					}
 				}
@@ -677,26 +680,27 @@ public class ColorHelper
 					double x = triangle.getNormal().getX();
 					double y = triangle.getNormal().getY();
 					double z = triangle.getNormal().getZ();
-					
+
 					print.println("vn " + df.format(x) + " " + df.format(y) + " " + df.format(z));
 				}
 			}
-			
+
 			int vertex = 1;
 			int normal = 1;
-			
+
 			for(int i = 0; i < colors.size(); i++)
 			{
 				String activeColor = colors.get(i);
-				
+
 				print.println("usemtl "
-						+ materialPattern.replace("{number}", Integer.toString(i)).replace("{color}", activeColor));
-				
+						              + materialPattern.replace("{number}", Integer.toString(i))
+						.replace("{color}", activeColor));
+
 				LinkedList<Triangle3D> triangles = allTriangles.get(activeColor);
 				for(int j = 0; j < triangles.size(); j++)
 				{
 					print.println("f " + (vertex) + "//" + (normal) + " " + (vertex + 1) + "//" + (normal) + " "
-							+ (vertex + 2) + "//" + (normal));
+							              + (vertex + 2) + "//" + (normal));
 					vertex += 3;
 					normal += 1;
 				}
