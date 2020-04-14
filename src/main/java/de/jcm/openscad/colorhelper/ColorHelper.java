@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintStream;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
@@ -74,7 +75,7 @@ public class ColorHelper
 		File input = null;
 		File output = null;
 		File mtlOutput = null;
-		File colorMapFile = new File("colors.map");
+		URL colorMapFile = ColorHelper.class.getResource("/colors.map");
 		
 		String outputPatternSCAD = "{number}_{input}_{group}_{color}.scad";
 		String outputPatternSTL = "{number}_{input}_{group}_{color}.stl";
@@ -126,7 +127,7 @@ public class ColorHelper
 			}
 			else if(arg.equals("--color-map") || arg.equals("--colors"))
 			{
-				colorMapFile = new File(iterator.next());
+				colorMapFile = new File(iterator.next()).toURI().toURL();
 			}
 			else if(arg.equals("--set") || arg.equals("-s"))
 			{
@@ -184,7 +185,7 @@ public class ColorHelper
 		df.setMaximumFractionDigits(340); // 340 =
 											// DecimalFormat.DOUBLE_FRACTION_DIGITS
 		
-		Scanner scanner = new Scanner(colorMapFile);
+		Scanner scanner = new Scanner(colorMapFile.openStream());
 		
 		// MARK: Read color map
 		while(scanner.hasNextLine())
