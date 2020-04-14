@@ -1,5 +1,8 @@
 package de.jcm.openscad.colorhelper;
 
+import de.jcm.math.geo.Triangle3D;
+import de.jcm.math.geo.vector.Vector3D;
+
 import java.awt.Color;
 import java.io.File;
 import java.io.FileWriter;
@@ -12,9 +15,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Scanner;
-
-import de.jcm.math.geo.Point3D;
-import de.jcm.math.geo.Triangle;
 
 public class ColorHelper
 {
@@ -404,7 +404,7 @@ public class ColorHelper
 					lines.add(line);
 				}
 			}
-			HashMap<String, LinkedList<Triangle>> allTriangles = new HashMap<>();
+			HashMap<String, LinkedList<Triangle3D>> allTriangles = new HashMap<>();
 			
 			for(int i = 0; i < colors.size(); i++)
 			{
@@ -498,7 +498,7 @@ public class ColorHelper
 					
 					Scanner scan = new Scanner(stl);
 					
-					LinkedList<Triangle> triangles = new LinkedList<>();
+					LinkedList<Triangle3D> triangles = new LinkedList<>();
 					String solidName = "";
 					while(scan.hasNextLine())
 					{
@@ -515,8 +515,8 @@ public class ColorHelper
 							double x = Double.parseDouble(coords[0]);
 							double y = Double.parseDouble(coords[1]);
 							double z = Double.parseDouble(coords[2]);
-							
-							Point3D normal = new Point3D(x, y, z);
+
+							Vector3D normal = new Vector3D(x, y, z);
 							
 							line = scan.nextLine();
 							if(line.equals("    outer loop"))
@@ -525,8 +525,8 @@ public class ColorHelper
 								vertices[0] = scan.nextLine();
 								vertices[1] = scan.nextLine();
 								vertices[2] = scan.nextLine();
-								
-								Point3D[] points = new Point3D[3];
+
+								Vector3D[] points = new Vector3D[3];
 								
 								for(int j = 0; j < 3; j++)
 								{
@@ -540,10 +540,10 @@ public class ColorHelper
 										y = Double.parseDouble(coords[1]);
 										z = Double.parseDouble(coords[2]);
 										
-										points[j] = new Point3D(x, y, z);
+										points[j] = new Vector3D(x, y, z);
 									}
 								}
-								triangles.add(new Triangle(points[0], points[1], points[2], normal));
+								triangles.add(new Triangle3D(points[0], points[1], points[2], normal));
 							}
 						}
 					}
@@ -559,7 +559,7 @@ public class ColorHelper
 					
 					print.println("o " + solidName);
 					
-					for(Triangle triangle : triangles)
+					for(Triangle3D triangle : triangles)
 					{
 						for(int j = 0; j < 3; j++)
 						{
@@ -570,7 +570,7 @@ public class ColorHelper
 							print.println("v " + df.format(x) + " " + df.format(y) + " " + df.format(z));
 						}
 					}
-					for(Triangle triangle : triangles)
+					for(Triangle3D triangle : triangles)
 					{
 						double x = triangle.getNormal().getX();
 						double y = triangle.getNormal().getY();
@@ -660,8 +660,8 @@ public class ColorHelper
 			{
 				String activeColor = colors.get(i);
 				
-				LinkedList<Triangle> triangles = allTriangles.get(activeColor);
-				for(Triangle triangle : triangles)
+				LinkedList<Triangle3D> triangles = allTriangles.get(activeColor);
+				for(Triangle3D triangle : triangles)
 				{
 					for(int j = 0; j < 3; j++)
 					{
@@ -672,7 +672,7 @@ public class ColorHelper
 						print.println("v " + df.format(x) + " " + df.format(y) + " " + df.format(z));
 					}
 				}
-				for(Triangle triangle : triangles)
+				for(Triangle3D triangle : triangles)
 				{
 					double x = triangle.getNormal().getX();
 					double y = triangle.getNormal().getY();
@@ -692,7 +692,7 @@ public class ColorHelper
 				print.println("usemtl "
 						+ materialPattern.replace("{number}", Integer.toString(i)).replace("{color}", activeColor));
 				
-				LinkedList<Triangle> triangles = allTriangles.get(activeColor);
+				LinkedList<Triangle3D> triangles = allTriangles.get(activeColor);
 				for(int j = 0; j < triangles.size(); j++)
 				{
 					print.println("f " + (vertex) + "//" + (normal) + " " + (vertex + 1) + "//" + (normal) + " "

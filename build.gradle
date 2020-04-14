@@ -1,0 +1,15 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation 'com.github.JnCrMx:JCMLib:1.0'
+}
+
+// Define the main class for the application
+mainClassName = 'de.jcm.openscad.colorhelper.ColorHelper'
